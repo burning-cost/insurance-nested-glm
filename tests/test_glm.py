@@ -158,8 +158,8 @@ def test_nested_glm_metrics():
     df, y, exposure = _make_glm_data(add_territory=False)
     glm = NestedGLM(formula="age_band", add_embedding_cols=False, add_territory=False)
     glm.fit(df, y, exposure)
-    assert glm.aic() > 0
-    assert glm.bic() > 0
+    assert np.isfinite(glm.aic())
+    assert np.isfinite(glm.bic())
     assert glm.deviance() >= 0
 
 

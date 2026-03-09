@@ -21,7 +21,7 @@ def test_credibility_report_basic():
     result = credibility_report(labels, exposure)
     assert set(result.columns) == {"territory", "n_units", "total_exposure"}
     assert len(result) == 3
-    # Sorted descending by total_exposure: territory 3 has 4.0, territory 2 has 4.0, territory 1 has 3.0
+    # Sorted descending by total_exposure
     assert result["total_exposure"].is_monotonic_decreasing
 
 
@@ -65,20 +65,22 @@ def test_build_adjacency_returns_w():
 
     from insurance_nested_glm._utils import build_adjacency
 
+    # Three boxes in a row: 0-1-2, each touching the next
     geoms = [box(0, 0, 1, 1), box(1, 0, 2, 1), box(2, 0, 3, 1)]
     gdf = gpd.GeoDataFrame({"geometry": geoms}, crs="EPSG:27700")
 
     w = build_adjacency(gdf)
-    # Middle polygon shares edges with both neighbours
-    assert 1 in w.neighbors[1]
-    assert 0 in w.neighbors[1]
+    # Middle polygon (index 1) should have both neighbours (0 and 2)
+    neighbours_of_1 = list(w.neighbors[1])
+    assert 0 in neighbours_of_1
+    assert 2 in neighbours_of_1
+    # End polygon (index 0) should have only one neighbour (1)
+    assert 1 in list(w.neighbors[0])
 
 
 def test_build_adjacency_raises_without_libpysal():
     """Without libpysal installed, build_adjacency should raise ImportError with helpful message."""
-    import importlib
     import sys
-    from unittest.mock import patch
 
     # Only mock if libpysal is actually installed (otherwise test is moot)
     try:

@@ -102,8 +102,8 @@ class TerritoryClusterer:
                 "Install with: pip install insurance-nested-glm[spatial]"
             ) from exc
 
+        feature_cols = list(feature_cols)
         gdf = gdf.copy().reset_index(drop=True)
-        features = gdf[list(feature_cols)].values.astype(float)
 
         # Detect connected components in the adjacency graph
         w_full = self._build_weights(gdf)
@@ -120,7 +120,6 @@ class TerritoryClusterer:
                 continue
 
             sub_gdf = gdf.iloc[component_indices].copy().reset_index(drop=True)
-            sub_features = features[component_indices]
 
             # Scale n_clusters proportionally to component size
             n_comp = len(component_indices)
@@ -128,7 +127,7 @@ class TerritoryClusterer:
             n_clust_comp = min(n_clust_comp, n_comp)
 
             sub_labels = self._cluster_component(
-                sub_gdf, sub_features, n_clust_comp, spopt
+                sub_gdf, feature_cols, n_clust_comp, spopt
             )
             labels_array[component_indices] = sub_labels + label_offset
             label_offset += sub_labels.max() + 1
@@ -221,12 +220,24 @@ class TerritoryClusterer:
     def _cluster_component(
         self,
         sub_gdf: "geopandas.GeoDataFrame",  # noqa: F821
-        features: np.ndarray,
+        feature_cols: List[str],
         n_clusters: int,
         spopt: object,
     ) -> np.ndarray:
-        """Run SKATER or MaxP on a single connected component."""
+        """Run SKATER or MaxP on a single connected component.
+
+        spopt.region.Skater requires ``attrs_name`` to be a list of column
+        names in the GeoDataFrame — it cannot accept ``None`` or a raw array.
+        We always add temporary columns named ``_feat_0``, ``_feat_1``, ...
+        to avoid conflicts with any existing columns.
+        """
         import libpysal
+
+        # Add feature columns with safe temporary names
+        tmp_cols = [f"_skater_feat_{i}" for i in range(len(feature_cols))]
+        sub_gdf = sub_gdf.copy()
+        for tmp, orig in zip(tmp_cols, feature_cols):
+            sub_gdf[tmp] = sub_gdf[orig].values
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -236,41 +247,17 @@ class TerritoryClusterer:
             model = spopt.region.Skater(
                 sub_gdf,
                 w,
-                attrs_name=None,  # we pass data directly
+                attrs_name=tmp_cols,
                 n_clusters=n_clusters,
                 floor=1,
             )
-            # spopt Skater accepts a numpy array when attrs_name=None in some versions.
-            # Fall back to using column names if needed.
-            try:
-                model.solve()
-            except (TypeError, AttributeError):
-                # Older spopt API: pass column names, not arrays.
-                # We add temporary columns to the sub_gdf copy.
-                tmp_cols = [f"_feat_{i}" for i in range(features.shape[1])]
-                sub_gdf = sub_gdf.copy()
-                for i, c in enumerate(tmp_cols):
-                    sub_gdf[c] = features[:, i]
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore")
-                    w = libpysal.weights.Queen.from_dataframe(
-                        sub_gdf, silence_warnings=True
-                    )
-                model = spopt.region.Skater(
-                    sub_gdf,
-                    w,
-                    attrs_name=tmp_cols,
-                    n_clusters=n_clusters,
-                    floor=1,
-                )
-                model.solve()
+            model.solve()
         elif self.method == "maxp":
-            # MaxP requires a threshold; use n_clusters as approximate guide.
             model = spopt.region.MaxPHeuristic(
                 sub_gdf,
                 w,
-                attrs_name=list(sub_gdf.columns[:1]),
-                threshold_name=list(sub_gdf.columns[:1])[0],
+                attrs_name=tmp_cols,
+                threshold_name=tmp_cols[0],
                 threshold=0.0,
                 top_n=10,
                 max_iterations_construction=99,
