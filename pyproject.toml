@@ -1,0 +1,90 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "insurance-nested-glm"
+version = "0.1.0"
+description = "Nested GLM with neural network entity embeddings and spatially constrained territory clustering for insurance ratemaking"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.9"
+authors = [
+    { name = "Burning Cost", email = "pricing.frontier@gmail.com" },
+]
+keywords = [
+    "insurance",
+    "pricing",
+    "GLM",
+    "nested GLM",
+    "entity embedding",
+    "territory",
+    "spatial clustering",
+    "actuarial",
+    "UK",
+    "motor",
+    "personal-lines",
+    "Poisson",
+    "Gamma",
+    "ratemaking",
+    "CANN",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Office/Business :: Financial",
+]
+dependencies = [
+    "numpy>=1.23",
+    "pandas>=1.5",
+    "scikit-learn>=1.1",
+    "statsmodels>=0.14",
+    "torch>=2.0",
+]
+
+[project.optional-dependencies]
+spatial = [
+    "geopandas>=0.13",
+    "libpysal>=4.7",
+    "spopt>=0.5",
+]
+plot = [
+    "matplotlib>=3.6",
+]
+all = [
+    "geopandas>=0.13",
+    "libpysal>=4.7",
+    "spopt>=0.5",
+    "matplotlib>=3.6",
+]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "geopandas>=0.13",
+    "libpysal>=4.7",
+    "spopt>=0.5",
+    "matplotlib>=3.6",
+    "pyarrow>=12.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/burning-cost/insurance-nested-glm"
+Repository = "https://github.com/burning-cost/insurance-nested-glm"
+Issues = "https://github.com/burning-cost/insurance-nested-glm/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/insurance_nested_glm"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
