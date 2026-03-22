@@ -87,4 +87,9 @@ __all__ = [
     "embedding_pca_plot",
 ]
 
-__version__ = "0.1.0"
+from importlib.metadata import version, PackageNotFoundError
+
+try:
+    __version__ = version("insurance-nested-glm")
+except PackageNotFoundError:
+    __version__ = "0.0.0"  # not installed
