@@ -1,3 +1,5 @@
+⚠️ **This package has been merged into [`insurance-glm-tools`](https://github.com/burning-cost/insurance-glm-tools).** This repository is archived. Install `insurance-glm-tools` instead.
+
 # insurance-nested-glm
 
 GLM ratemaking is well understood. The problem is what to do with the variables that don't fit cleanly into it: vehicle make/model has thousands of levels, postcode sector has even more, and the standard GLM response — group them or drop them — throws away real signal.
